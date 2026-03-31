@@ -1,0 +1,1657 @@
+{
+  "name": "News Digest Bot - Multi-User (Postgres)",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "id": "telegram-trigger",
+      "name": "Telegram Polling Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $input.first().json;\nconst update = msg;\nlet chatId, userId, text, firstName, isCallback, callbackData, messageId;\n\nif (update.callback_query) {\n  isCallback = true;\n  chatId = update.callback_query.message.chat.id;\n  userId = update.callback_query.from.id;\n  firstName = update.callback_query.from.first_name;\n  callbackData = update.callback_query.data;\n  messageId = update.callback_query.message.message_id;\n  text = callbackData;\n} else if (update.message) {\n  isCallback = false;\n  chatId = update.message.chat.id;\n  userId = update.message.from.id;\n  firstName = update.message.from.first_name;\n  text = update.message.text || '';\n  messageId = update.message.message_id;\n  callbackData = null;\n} else {\n  return [];\n}\n\nreturn [{ json: {\n  chatId: String(chatId),\n  userId: String(userId),\n  firstName,\n  text: text.trim(),\n  isCallback,\n  callbackData,\n  messageId,\n  raw: update\n}}];"
+      },
+      "id": "parse-update",
+      "name": "Parse Telegram Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.text }}",
+                    "rightValue": "/start",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.text }}",
+                    "rightValue": "/help",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.text }}",
+                    "rightValue": "/newtopic",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.text }}",
+                    "rightValue": "/mytopics",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.text }}",
+                    "rightValue": "/digest",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.text }}",
+                    "rightValue": "/addfeed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.text }}",
+                    "rightValue": "/settings",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.text }}",
+                    "rightValue": "/unsubscribe",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "router-commands",
+      "name": "Router Comandi",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO users (user_id, chat_id, first_name)\nVALUES ($1, $2, $3)\nON CONFLICT (user_id) DO UPDATE SET\n  chat_id    = EXCLUDED.chat_id,\n  first_name = EXCLUDED.first_name,\n  updated_at = NOW();",
+        "queryParams": "={{ [$('Parse Telegram Update').item.json.userId, $('Parse Telegram Update').item.json.chatId, $('Parse Telegram Update').item.json.firstName] }}"
+      },
+      "id": "upsert-user",
+      "name": "Upsert User",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        900,
+        180
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CREDENTIAL_ID",
+          "name": "Postgres n8n_workflows"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse Telegram Update').item.json.chatId }}",
+        "text": "👋 Benvenuto *{{ $('Parse Telegram Update').item.json.firstName }}*!\\n\\nSono il tuo *News Digest Bot*. Raccoglio notizie su argomenti personalizzati e te le invio via Telegram o email.\\n\\n📋 *Comandi disponibili:*\\n/newtopic — Crea un nuovo argomento\\n/mytopics — Vedi i tuoi argomenti attivi\\n/digest — Richiedi un digest al volo\\n/addfeed — Aggiungi un feed RSS personalizzato\\n/settings — Modifica email e scheduling\\n/help — Guida completa\\n\\n🚀 Inizia con /newtopic per creare il tuo primo argomento!",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "send-welcome",
+      "name": "Send Welcome",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        60
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse Telegram Update').item.json.chatId }}",
+        "text": "📖 *Guida completa News Digest Bot*\\n\\n*Creare un argomento (/newtopic)*\\nTi chiederò di inviare un messaggio nel formato guidato con:\\n— Nome argomento\\n— Keywords di ricerca\\n— Frequenza (none/daily/weekly)\\n— Orario e giorno\\n— Canale (telegram/email/both)\\n\\n*Argomenti AI speciali:*\\nSe crei un topic con keywords AI, LLM, machine learning ecc., attivo automaticamente i feed di HuggingFace, OpenAI Blog, The Batch, Anthropic, GitHub Trending.\\n\\n*Digest on-demand (/digest)*\\nRicevi subito le ultime notizie su un tuo topic.\\n\\n*Aggiungere feed RSS (/addfeed)*\\nPuoi aggiungere feed RSS custom a qualsiasi topic.\\n\\n*Impostazioni (/settings)*\\nModifica email, scheduling, elimina topic.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "send-help",
+      "name": "Send Help",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        180
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse Telegram Update').item.json.chatId }}",
+        "text": "🆕 *Creazione Nuovo Topic*\\n\\nInviami un messaggio con questo formato esatto:\\n\\n```\\nNOME: [nome argomento]\\nKEYWORDS: [keyword1, keyword2, keyword3]\\nSCHEDULE: [none/daily/weekly]\\nORA: [HH:MM]\\nGIORNO: [lunedi/martedi/mercoledi/giovedi/venerdi/sabato/domenica]\\nDELIVERY: [telegram/email/both]\\nEMAIL: [tua@email.com]\\n```\\n\\n*Esempio:*\\n```\\nNOME: Intelligenza Artificiale\\nKEYWORDS: AI, LLM, machine learning, GPT, Claude\\nSCHEDULE: daily\\nORA: 08:00\\nGIORNO: lunedi\\nDELIVERY: both\\nEMAIL: mario@gmail.com\\n```\\n\\n_GIORNO ed EMAIL sono opzionali in base a SCHEDULE e DELIVERY scelti._",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "ask-topic-form",
+      "name": "Ask Topic Form",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT t.id, t.name, t.keywords, t.schedule, t.schedule_time, t.schedule_day, t.delivery, u.chat_id, u.email\nFROM topics t\nJOIN users u ON t.user_id = u.user_id\nWHERE t.user_id = $1 AND t.active = TRUE\nORDER BY t.created_at DESC;",
+        "queryParams": "={{ [$('Parse Telegram Update').item.json.userId] }}"
+      },
+      "id": "get-my-topics",
+      "name": "Get My Topics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        900,
+        420
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CREDENTIAL_ID",
+          "name": "Postgres n8n_workflows"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const topics = $input.all();\nconst chatId = $('Parse Telegram Update').first().json.chatId;\n\nif (!topics || topics.length === 0 || !topics[0].json.id) {\n  return [{ json: {\n    chatId,\n    text: '📭 Non hai ancora nessun argomento.\\n\\nUsa /newtopic per crearne uno!',\n    replyMarkup: null\n  }}];\n}\n\nlet msg = '📋 *I tuoi argomenti attivi:*\\n\\n';\nconst buttons = [];\n\ntopics.forEach((t, i) => {\n  const topic = t.json;\n  const schedule = topic.schedule === 'none' ? 'Solo on-demand' :\n    topic.schedule === 'daily' ? `Giornaliero alle ${topic.schedule_time}` :\n    `Settimanale (${topic.schedule_day}) alle ${topic.schedule_time}`;\n  const delivery = topic.delivery === 'both' ? 'Telegram + Email' : topic.delivery;\n  msg += `*${i+1}. ${topic.name}*\\n`;\n  msg += `   🔑 ${topic.keywords}\\n`;\n  msg += `   ⏰ ${schedule} · 📨 ${delivery}\\n\\n`;\n  buttons.push([{ text: `📰 Digest \"${topic.name}\"`, callback_data: `digest:${topic.id}` }]);\n});\n\nmsg += '_Clicca su un argomento per un digest immediato._';\n\nreturn [{ json: {\n  chatId,\n  text: msg,\n  replyMarkup: JSON.stringify({ inline_keyboard: buttons })\n}}];"
+      },
+      "id": "format-topics-list",
+      "name": "Format Topics List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "reply_markup": "={{ $json.replyMarkup }}"
+        }
+      },
+      "id": "send-topics-list",
+      "name": "Send Topics List",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1340,
+        420
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT t.id, t.name FROM topics t WHERE t.user_id = $1 AND t.active = TRUE ORDER BY t.name;",
+        "queryParams": "={{ [$('Parse Telegram Update').item.json.userId] }}"
+      },
+      "id": "get-topics-for-digest",
+      "name": "Get Topics for Digest Picker",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        900,
+        540
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CREDENTIAL_ID",
+          "name": "Postgres n8n_workflows"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const topics = $input.all();\nconst chatId = $('Parse Telegram Update').first().json.chatId;\n\nif (!topics || topics.length === 0 || !topics[0].json.id) {\n  return [{ json: {\n    chatId,\n    text: '📭 Nessun argomento trovato. Crea prima un topic con /newtopic',\n    buttons: null\n  }}];\n}\n\nconst buttons = topics.map(t => ([{\n  text: t.json.name,\n  callback_data: `digest:${t.json.id}`\n}]));\n\nreturn [{ json: {\n  chatId,\n  text: '📰 Su quale argomento vuoi un digest immediato?',\n  buttons: JSON.stringify({ inline_keyboard: buttons })\n}}];"
+      },
+      "id": "ask-which-digest",
+      "name": "Ask Which Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "reply_markup": "={{ $json.buttons }}"
+        }
+      },
+      "id": "send-digest-picker",
+      "name": "Send Digest Picker",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1340,
+        540
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst isCallback = data.isCallback;\nconst callbackData = data.callbackData || '';\nconst chatId = data.chatId;\n\nif (isCallback && callbackData.startsWith('digest:')) {\n  const topicId = callbackData.split(':')[1];\n  return [{ json: { ...data, action: 'digest', value: topicId } }];\n}\n\nif (isCallback && callbackData.startsWith('confirm_unsubscribe:')) {\n  return [{ json: { ...data, action: 'confirm_unsubscribe', value: 'all' } }];\n}\n\nif (isCallback && callbackData.startsWith('cancel:')) {\n  return [{ json: { ...data, action: 'cancel', value: callbackData.split(':')[1] } }];\n}\n\n// Testo libero: potrebbe essere la risposta al form /newtopic\nif (!isCallback && data.text && data.text.includes('NOME:') && data.text.includes('KEYWORDS:')) {\n  return [{ json: { ...data, action: 'submit_topic_form', value: data.text } }];\n}\n\nreturn [{ json: { ...data, action: 'unknown', value: data.text } }];"
+      },
+      "id": "parse-callback",
+      "name": "Parse Callback / Free Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "digest",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "submit_topic_form",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "confirm_unsubscribe",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "router-callbacks",
+      "name": "Router Callbacks",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1340,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  t.id, t.name, t.keywords, t.schedule, t.schedule_time,\n  t.schedule_day, t.delivery, t.user_id,\n  u.chat_id, u.email,\n  STRING_AGG(cf.feed_url, '|||') AS custom_feeds\nFROM topics t\nJOIN users u ON t.user_id = u.user_id\nLEFT JOIN custom_feeds cf ON cf.topic_id = t.id\nWHERE t.id = $1\nGROUP BY t.id, t.name, t.keywords, t.schedule, t.schedule_time,\n         t.schedule_day, t.delivery, t.user_id, u.chat_id, u.email;",
+        "queryParams": "={{ [$json.value] }}"
+      },
+      "id": "get-topic-by-id",
+      "name": "Get Topic by ID",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1560,
+        540
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CREDENTIAL_ID",
+          "name": "Postgres n8n_workflows"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const topic = $input.first().json;\nconst keywords = (topic.keywords || '').toLowerCase();\nconst name = (topic.name || '').toLowerCase();\n\nconst AI_KEYWORDS = ['ai','artificial intelligence','intelligenza artificiale',\n  'llm','machine learning','deep learning','neural','gpt','claude',\n  'gemini','openai','anthropic','huggingface','diffusion','transformer'];\n\nconst isAI = AI_KEYWORDS.some(k => keywords.includes(k) || name.includes(k));\n\nconst AI_FEEDS = [\n  { url: 'https://huggingface.co/blog/feed.xml',                              name: 'HuggingFace Blog' },\n  { url: 'https://openai.com/blog/rss.xml',                                   name: 'OpenAI Blog' },\n  { url: 'https://www.deeplearning.ai/the-batch/feed/',                       name: 'The Batch' },\n  { url: 'https://www.anthropic.com/rss.xml',                                 name: 'Anthropic News' },\n  { url: 'https://github-trending-rss.vercel.app/repositories?language=python', name: 'GitHub Trending Python' },\n  { url: 'https://github-trending-rss.vercel.app/repositories',               name: 'GitHub Trending' },\n  { url: 'https://www.technologyreview.com/feed/',                             name: 'MIT Tech Review' },\n  { url: 'https://feeds.arstechnica.com/arstechnica/technology-lab',           name: 'Ars Technica AI' }\n];\n\nconst GENERIC_FEEDS = [\n  { url: 'https://feeds.arstechnica.com/arstechnica/technology-lab', name: 'Ars Technica Tech' },\n  { url: 'https://feeds.feedburner.com/oreilly/radar',               name: \"O'Reilly Radar\" },\n  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml', name: 'NYT Technology' }\n];\n\nconst customFeedsRaw = topic.custom_feeds || '';\nconst customFeeds = customFeedsRaw\n  ? customFeedsRaw.split('|||').filter(u => u.trim()).map(url => ({ url: url.trim(), name: 'Custom Feed' }))\n  : [];\n\nconst feedsToUse = isAI\n  ? [...AI_FEEDS, ...customFeeds]\n  : [...GENERIC_FEEDS, ...customFeeds];\n\nreturn [{ json: {\n  ...topic,\n  isAI,\n  feedsToUse,\n  searchQuery: topic.keywords\n}}];"
+      },
+      "id": "prepare-sources",
+      "name": "Prepare Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "feedsToUse",
+        "options": {}
+      },
+      "id": "split-feeds",
+      "name": "Split Feeds",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.feedsToUse.url }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "fetch-rss",
+      "name": "Fetch RSS Feed",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        2220,
+        540
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst MAX_ARTICLES = 20;\nconst DAYS_BACK = 7;\nconst cutoff = new Date();\ncutoff.setDate(cutoff.getDate() - DAYS_BACK);\n\nconst articles = [];\nitems.forEach(item => {\n  if (!item.json.title) return;\n  const pub = new Date(item.json.pubDate || item.json.isoDate || item.json.date || Date.now());\n  if (pub >= cutoff || !item.json.pubDate) {\n    articles.push({\n      title:   item.json.title || 'Senza titolo',\n      link:    item.json.link  || item.json.url || '',\n      summary: (item.json.contentSnippet || item.json.summary || item.json.content || '').substring(0, 400),\n      date:    item.json.pubDate || item.json.isoDate || 'N/D',\n      source:  item.json.feedTitle || 'RSS'\n    });\n  }\n});\n\n// Deduplication per URL\nconst seen = new Set();\nconst unique = articles.filter(a => {\n  if (!a.link || seen.has(a.link)) return false;\n  seen.add(a.link);\n  return true;\n});\n\nunique.sort((a, b) => new Date(b.date) - new Date(a.date));\nconst selected = unique.slice(0, MAX_ARTICLES);\n\nconst topicCtx = $('Prepare Sources').first().json;\n\nreturn [{ json: {\n  articles:    selected,\n  topicName:   topicCtx.name,\n  keywords:    topicCtx.keywords,\n  chatId:      topicCtx.chat_id,\n  email:       topicCtx.email,\n  delivery:    topicCtx.delivery,\n  topicId:     topicCtx.id,\n  userId:      topicCtx.user_id,\n  articleCount: selected.length\n}}];"
+      },
+      "id": "aggregate-articles",
+      "name": "Aggregate & Deduplicate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst articles = data.articles;\n\nif (!articles || articles.length === 0) {\n  return [{ json: {\n    ...data,\n    skipLLM: true,\n    digestText: `📭 *Nessuna notizia recente trovata per \"${data.topicName}\".*\\n\\nProva ad espandere le keywords o aggiungi feed RSS con /addfeed.`\n  }}];\n}\n\nconst articlesText = articles.map((a, i) =>\n  `${i+1}. **${a.title}** (${a.source}, ${a.date})\\n   URL: ${a.link}\\n   ${a.summary}`\n).join('\\n\\n');\n\nconst prompt = `Sei un giornalista specializzato che produce newsletter di qualità.\nL'utente segue l'argomento: \"${data.topicName}\" con keywords: ${data.keywords}.\n\nHai a disposizione questi articoli recenti da fonti autorevoli:\n\n${articlesText}\n\nGenera un digest in italiano, stile newsletter professionale:\n\n🗞️ **DIGEST: ${data.topicName}**\n📅 ${new Date().toLocaleDateString('it-IT')}\n\n## Panoramica\n[2-3 frasi che sintetizzano il momento attuale dell'argomento]\n\n## Notizie Principali\n[Per ogni notizia rilevante (max 5): titolo linkato, 2-3 righe di analisi, impatto]\n\n## Da Tenere d'Occhio\n[1-2 trend emergenti o sviluppi interessanti]\n\n## Risorse\n[Lista link più importanti con titolo breve]\n\nTono: informativo, preciso, coinvolgente. Solo notizie pertinenti alle keywords. Usa Markdown con grassetti ed emoji per leggibilità su Telegram.`;\n\nreturn [{ json: { ...data, skipLLM: false, llmPrompt: prompt } }];"
+      },
+      "id": "build-llm-prompt",
+      "name": "Build LLM Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2660,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond_bool",
+              "leftValue": "={{ $json.skipLLM }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-skip-llm",
+      "name": "Skip LLM?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.llmPrompt }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 2000,
+          "temperature": 0.4
+        }
+      },
+      "id": "llm-generate-digest",
+      "name": "LLM Generate Digest",
+      "type": "n8n-nodes-github-copilot-models.githubCopilotModels",
+      "typeVersion": 1,
+      "position": [
+        3100,
+        420
+      ],
+      "credentials": {
+        "githubCopilotModelsApi": {
+          "id": "GITHUB_COPILOT_CREDENTIAL_ID",
+          "name": "GitHub Copilot Models"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const llmOut = $input.first().json;\nconst src    = $('Build LLM Prompt').first().json;\n\nconst digestText =\n  llmOut.text ||\n  llmOut.message ||\n  llmOut.content ||\n  (llmOut.choices?.[0]?.message?.content) ||\n  'Errore nella generazione del digest.';\n\nreturn [{ json: { ...src, digestText: digestText.trim() } }];"
+      },
+      "id": "extract-llm-output",
+      "name": "Extract LLM Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3320,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $input.first().json }];"
+      },
+      "id": "merge-digest-paths",
+      "name": "Merge Digest Paths",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3320,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond_str",
+              "leftValue": "={{ $json.delivery }}",
+              "rightValue": "telegram",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-telegram-delivery",
+      "name": "Deliver via Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3540,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data  = $input.first().json;\nconst text  = data.digestText;\nconst LIMIT = 4000;\n\nif (text.length <= LIMIT) {\n  return [{ json: { ...data, chunk: text } }];\n}\n\nconst chunks = [];\nlet i = 0;\nwhile (i < text.length) {\n  let end = i + LIMIT;\n  if (end < text.length) {\n    const nl = text.lastIndexOf('\\n', end);\n    if (nl > i) end = nl;\n  }\n  chunks.push(text.substring(i, end));\n  i = end;\n}\n\nreturn chunks.map(chunk => ({ json: { ...data, chunk } }));"
+      },
+      "id": "split-telegram-chunks",
+      "name": "Split for Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3760,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.chunk }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "send-digest-telegram",
+      "name": "Send Digest via Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3980,
+        420
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond_str",
+              "leftValue": "={{ $json.delivery }}",
+              "rightValue": "email",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "cond_str",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-email-delivery",
+      "name": "Deliver via Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3760,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "YOUR_SENDER@gmail.com",
+        "toEmail": "={{ $json.email }}",
+        "subject": "📰 News Digest: {{ $json.topicName }} — {{ $now.format('DD/MM/YYYY') }}",
+        "emailType": "html",
+        "message": "={{ '<html><body style=\"font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:20px;background:#f9f9f9\"><div style=\"background:#fff;padding:24px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08)\"><h2 style=\"color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:8px\">📰 News Digest: ' + $json.topicName + '</h2>' + $json.digestText.replace(/\\n/g,'<br>').replace(/\\*\\*(.*?)\\*\\*/g,'<strong>$1</strong>').replace(/\\*(.*?)\\*/g,'<em>$1</em>') + '<hr style=\"margin-top:32px\"><p style=\"color:#aaa;font-size:11px\">Digest generato automaticamente. Per gestire le preferenze usa il bot Telegram.</p></div></body></html>' }}",
+        "options": {}
+      },
+      "id": "send-digest-email",
+      "name": "Send Digest via Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        3980,
+        620
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "SMTP Gmail/Outlook"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO digest_log (user_id, topic_id, delivery_method)\nVALUES ($1, $2, $3);",
+        "queryParams": "={{ [$('Prepare Sources').first().json.user_id, $('Prepare Sources').first().json.id, $('Prepare Sources').first().json.delivery] }}"
+      },
+      "id": "log-digest-sent",
+      "name": "Log Digest Sent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4200,
+        540
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CREDENTIAL_ID",
+          "name": "Postgres n8n_workflows"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "scheduler-trigger",
+      "name": "Scheduler (Hourly Check)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  t.id, t.name, t.keywords, t.schedule, t.schedule_time,\n  t.schedule_day, t.delivery, t.user_id,\n  u.chat_id, u.email,\n  STRING_AGG(cf.feed_url, '|||') AS custom_feeds\nFROM topics t\nJOIN users u ON t.user_id = u.user_id\nLEFT JOIN custom_feeds cf ON cf.topic_id = t.id\nWHERE\n  t.active = TRUE\n  AND t.schedule != 'none'\n  AND (\n    (\n      t.schedule = 'daily'\n      AND to_char(NOW() AT TIME ZONE 'Europe/Rome', 'HH24') = SPLIT_PART(t.schedule_time, ':', 1)\n      AND EXTRACT(MINUTE FROM NOW() AT TIME ZONE 'Europe/Rome') BETWEEN 0 AND 5\n    ) OR (\n      t.schedule = 'weekly'\n      AND lower(to_char(NOW() AT TIME ZONE 'Europe/Rome', 'day')) LIKE lower(t.schedule_day) || '%'\n      AND to_char(NOW() AT TIME ZONE 'Europe/Rome', 'HH24') = SPLIT_PART(t.schedule_time, ':', 1)\n      AND EXTRACT(MINUTE FROM NOW() AT TIME ZONE 'Europe/Rome') BETWEEN 0 AND 5\n    )\n  )\n  AND NOT EXISTS (\n    SELECT 1 FROM digest_log dl\n    WHERE dl.topic_id = t.id\n    AND dl.sent_at > NOW() - INTERVAL '60 minutes'\n  )\nGROUP BY t.id, t.name, t.keywords, t.schedule, t.schedule_time,\n         t.schedule_day, t.delivery, t.user_id, u.chat_id, u.email;"
+      },
+      "id": "get-scheduled-topics",
+      "name": "Get Topics Due for Digest",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        900
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CREDENTIAL_ID",
+          "name": "Postgres n8n_workflows"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond_num",
+              "leftValue": "={{ $input.all().filter(i => i.json.id).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "larger"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-has-scheduled",
+      "name": "Has Topics to Process?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "id",
+        "options": {}
+      },
+      "id": "split-scheduled-topics",
+      "name": "Split Scheduled Topics",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        900,
+        840
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst text = data.text || '';\nconst chatId = data.chatId;\nconst userId = data.userId;\n\nconst extract = (field) => {\n  const regex = new RegExp(`${field}:\\\\s*(.+)`, 'i');\n  const match = text.match(regex);\n  return match ? match[1].trim() : null;\n};\n\nconst nome     = extract('NOME');\nconst keywords = extract('KEYWORDS');\nconst schedule = (extract('SCHEDULE') || 'none').toLowerCase();\nconst ora      = extract('ORA') || '08:00';\nconst giorno   = (extract('GIORNO') || 'lunedi').toLowerCase();\nconst delivery = (extract('DELIVERY') || 'telegram').toLowerCase();\nconst email    = extract('EMAIL');\n\nif (!nome || !keywords) {\n  return [{ json: {\n    chatId, error: true,\n    message: '❌ Formato non valido. Includi almeno NOME e KEYWORDS. Riprova con /newtopic'\n  }}];\n}\n\nreturn [{ json: { chatId, userId, nome, keywords, schedule, ora, giorno, delivery, email, error: false } }];"
+      },
+      "id": "parse-topic-form",
+      "name": "Parse Topic Form",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond_bool",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-form-valid",
+      "name": "Form Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO users (user_id, chat_id, email)\nVALUES ($1, $2, $3)\nON CONFLICT (user_id) DO UPDATE SET\n  email = COALESCE(EXCLUDED.email, users.email),\n  updated_at = NOW();\n\nINSERT INTO topics (user_id, name, keywords, schedule, schedule_time, schedule_day, delivery)\nVALUES ($1, $4, $5, $6, $7, $8, $9);",
+        "queryParams": "={{ [$json.userId, $json.chatId, $json.email, $json.nome, $json.keywords, $json.schedule, $json.ora, $json.giorno, $json.delivery] }}"
+      },
+      "id": "save-new-topic",
+      "name": "Save New Topic",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2000,
+        600
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CREDENTIAL_ID",
+          "name": "Postgres n8n_workflows"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse Topic Form').first().json.chatId }}",
+        "text": "✅ *Topic creato con successo!*\\n\\n📌 *{{ $('Parse Topic Form').first().json.nome }}*\\n🔑 Keywords: `{{ $('Parse Topic Form').first().json.keywords }}`\\n⏰ Schedule: {{ $('Parse Topic Form').first().json.schedule }}\\n📨 Delivery: {{ $('Parse Topic Form').first().json.delivery }}\\n\\nUsa /digest per ricevere subito un digest!\\nVuoi aggiungere feed RSS? Usa /addfeed",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "confirm-topic-created",
+      "name": "Confirm Topic Created",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2220,
+        600
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "send-form-error",
+      "name": "Send Form Error",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2000,
+        740
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE topics SET active = FALSE, updated_at = NOW() WHERE user_id = $1;",
+        "queryParams": "={{ [$('Parse Callback / Free Text').first().json.userId] }}"
+      },
+      "id": "do-unsubscribe",
+      "name": "Unsubscribe All",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1560,
+        780
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CREDENTIAL_ID",
+          "name": "Postgres n8n_workflows"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse Telegram Update').item.json.chatId }}",
+        "text": "✅ Tutti i digest schedulati sono stati disattivati.\\nI tuoi topic sono conservati. Puoi riattivarli con /settings.",
+        "additionalFields": {}
+      },
+      "id": "confirm-unsubscribe",
+      "name": "Confirm Unsubscribe",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1780,
+        780
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse Telegram Update').item.json.chatId }}",
+        "text": "⚙️ *Impostazioni account*\\n\\nCosa vuoi fare?",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "reply_markup": "{\"inline_keyboard\":[[{\"text\":\"🗑️ Disattiva tutti i digest\",\"callback_data\":\"confirm_unsubscribe:all\"}],[{\"text\":\"📋 I miei topic\",\"callback_data\":\"cmd:mytopics\"}]]}"
+        }
+      },
+      "id": "send-settings-menu",
+      "name": "Send Settings Menu",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        780
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse Telegram Update').item.json.chatId }}",
+        "text": "📡 *Aggiungi Feed RSS Personalizzato*\\n\\nInvia un messaggio nel formato:\\n\\n```\\nFEED_URL: https://example.com/feed.xml\\nFEED_NAME: Nome del feed\\nTOPIC_ID: [id del topic, usa /mytopics per vederlo]\\n```",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "ask-feed-url",
+      "name": "Ask Feed URL",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        900
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse Telegram Update').item.json.chatId }}",
+        "text": "❓ Comando non riconosciuto.\\n\\nUsa /help per vedere tutti i comandi disponibili.",
+        "additionalFields": {}
+      },
+      "id": "send-unknown",
+      "name": "Send Unknown Command",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1560,
+        900
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Polling Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Telegram Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Telegram Update": {
+      "main": [
+        [
+          {
+            "node": "Router Comandi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Comandi": {
+      "main": [
+        [
+          {
+            "node": "Upsert User",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Help",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ask Topic Form",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get My Topics",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Topics for Digest Picker",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ask Feed URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Settings Menu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unsubscribe All",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Callback / Free Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert User": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get My Topics": {
+      "main": [
+        [
+          {
+            "node": "Format Topics List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Topics List": {
+      "main": [
+        [
+          {
+            "node": "Send Topics List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Topics for Digest Picker": {
+      "main": [
+        [
+          {
+            "node": "Ask Which Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask Which Digest": {
+      "main": [
+        [
+          {
+            "node": "Send Digest Picker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Digest Picker": {
+      "main": [
+        [
+          {
+            "node": "Get Topic by ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Callback / Free Text": {
+      "main": [
+        [
+          {
+            "node": "Router Callbacks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Callbacks": {
+      "main": [
+        [
+          {
+            "node": "Get Topic by ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Topic Form",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unsubscribe All",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Unknown Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Topic by ID": {
+      "main": [
+        [
+          {
+            "node": "Prepare Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Sources": {
+      "main": [
+        [
+          {
+            "node": "Split Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Feeds": {
+      "main": [
+        [
+          {
+            "node": "Fetch RSS Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch RSS Feed": {
+      "main": [
+        [
+          {
+            "node": "Aggregate & Deduplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate & Deduplicate": {
+      "main": [
+        [
+          {
+            "node": "Build LLM Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build LLM Prompt": {
+      "main": [
+        [
+          {
+            "node": "Skip LLM?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip LLM?": {
+      "main": [
+        [
+          {
+            "node": "Merge Digest Paths",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LLM Generate Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Generate Digest": {
+      "main": [
+        [
+          {
+            "node": "Extract LLM Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract LLM Output": {
+      "main": [
+        [
+          {
+            "node": "Merge Digest Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Digest Paths": {
+      "main": [
+        [
+          {
+            "node": "Deliver via Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deliver via Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Split for Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deliver via Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split for Telegram": {
+      "main": [
+        [
+          {
+            "node": "Send Digest via Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Digest via Telegram": {
+      "main": [
+        [
+          {
+            "node": "Deliver via Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deliver via Email?": {
+      "main": [
+        [
+          {
+            "node": "Send Digest via Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Digest Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Digest via Email": {
+      "main": [
+        [
+          {
+            "node": "Log Digest Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scheduler (Hourly Check)": {
+      "main": [
+        [
+          {
+            "node": "Get Topics Due for Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Topics Due for Digest": {
+      "main": [
+        [
+          {
+            "node": "Has Topics to Process?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Topics to Process?": {
+      "main": [
+        [
+          {
+            "node": "Split Scheduled Topics",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Split Scheduled Topics": {
+      "main": [
+        [
+          {
+            "node": "Prepare Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Topic Form": {
+      "main": [
+        [
+          {
+            "node": "Form Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form Valid?": {
+      "main": [
+        [
+          {
+            "node": "Save New Topic",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Form Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save New Topic": {
+      "main": [
+        [
+          {
+            "node": "Confirm Topic Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unsubscribe All": {
+      "main": [
+        [
+          {
+            "node": "Confirm Unsubscribe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "tags": [
+    "news",
+    "telegram",
+    "digest",
+    "postgres"
+  ],
+  "versionId": "2.0.0"
+}
